@@ -3,6 +3,8 @@ import { IonicPage, NavController, NavParams } from 'ionic-angular';
 import { ItemAddPage } from '../item-add/item-add';
 import { ItemDetailPage } from '../item-detail/item-detail';
 import { ModalController } from 'ionic-angular';
+import { DataProvider } from '../../providers/data/data';
+import { AlertController } from 'ionic-angular';
 
 
 
@@ -19,8 +21,14 @@ import { ModalController } from 'ionic-angular';
   templateUrl: 'item-list.html',
 })
 export class ItemListPage {
-	itemList = [{"name": "Learn Ionic","description":"Learn Ionic Slide 12345", "completed":false}, {"name":"FreeCodeCamp","description":"Complete FCC by this week", "completed":false}, {"name":"I Love WOD!!","description":"WOD turn my brain", "completed":false}]
-  constructor(public navCtrl: NavController, public navParams: NavParams,public modalCtrl: ModalController) {
+	itemList = []
+  constructor(public navCtrl: NavController, public navParams: NavParams,public modalCtrl: ModalController, public dataService: DataProvider, public alertCtrl: AlertController) {
+    this.dataService.getData().then((todos)=>
+      { if(todos){
+        this.itemList=JSON.parse(todos); 
+      }
+      }
+      )
   }
 
   ionViewDidLoad() {
@@ -31,8 +39,10 @@ export class ItemListPage {
   	// this.navCtrl.push(ItemAddPage, {item:item})
     let modal = this.modalCtrl.create(ItemAddPage);
      modal.onDidDismiss(data => {
-     this.itemList.push(data);
+     this.itemList.push(data)
+     this.dataService.saveData(this.itemList);
    });
+
     modal.present();
   }
 
@@ -45,7 +55,31 @@ export class ItemListPage {
  }
 
  remove(item){
-  this.itemList.splice (this.itemList.indexOf(item),1);
+   let confirm = this.alertCtrl.create({
+      title: 'Are you sure?',
+      message: 'Are you sure you want to delete?',
+      buttons: [
+        {
+          text: 'Cancel',
+          handler: () => {
+           this.dataService.deleteData(item,(todos)=>{
+             this.toDoArray
+           })
+          }
+        },
+        {
+          text: 'Delete it!',
+          handler: () => {
+           this.dataService.deleteData(item,(todos)=> {
+             this.itemList = JSON.parse(todos);
+           })
+          }
+        }
+      ]
+    });
+    confirm.present();
+  }
+  // this.itemList.splice (this.itemList.indexOf(item),1);
  }
 
 }
